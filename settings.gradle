@@ -1,0 +1,3 @@
+include ':app'
+rootProject.name = "SolitareSolver"
+include ':openCVLibrary3410'
