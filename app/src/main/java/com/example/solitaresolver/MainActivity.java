@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -174,8 +173,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         grayBitmap = Bitmap.createBitmap(width,height,Bitmap.Config.RGB_565);
 
+        //Edge detection
         Utils.bitmapToMat(ImageBitmap,Rgba);
-        Imgproc.cvtColor(Rgba,grayMat,Imgproc.COLOR_RGB2GRAY);
+        Imgproc.cvtColor(Rgba, grayMat, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.Canny(Rgba, grayMat, 100, 80);
+
         Utils.matToBitmap(grayMat,grayBitmap);
 
         imageView.setImageBitmap(grayBitmap);
