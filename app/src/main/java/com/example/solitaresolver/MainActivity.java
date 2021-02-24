@@ -5,21 +5,25 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Toast;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
     private CameraBridgeViewBase _cameraBridgeViewBase;
+    private Button takePictureButton;
 
     private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -39,16 +43,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
+        takePictureButton = findViewById(R.id.takePictureButton);
+
+        takePictureButton.setOnClickListener(this);
+
+
 
         // Permissions for Android 6+
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.CAMERA},
                 1);
 
-        _cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.main_surface);
+
+
+
+        _cameraBridgeViewBase = (MyCameraView) findViewById(R.id.main_surface);
         _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         _cameraBridgeViewBase.setCvCameraViewListener(this);
     }
@@ -112,4 +123,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         return frame;
     }
 
+    @Override
+    public void onClick(View v) {
+        if(takePictureButton == v) {
+            //Take picture
+            //Imgcodecs.imwrite(filename, mRgba);
+        }
+    }
 }
