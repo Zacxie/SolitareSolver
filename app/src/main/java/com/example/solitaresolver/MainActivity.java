@@ -1,31 +1,43 @@
 package com.example.solitaresolver;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.SurfaceView;
+import android.provider.MediaStore;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
+    Mat mRgba;
 
+    Uri imageUri;
+    public Bitmap grayBitmap, ImageBitmap;
     private CameraBridgeViewBase _cameraBridgeViewBase;
-    private Button takePictureButton;
+    private Button gallaryButton, grayScaleButton;
+    private ImageView imageView;
 
-    private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
+    /*private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
@@ -38,16 +50,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 }
             }
         }
-    };
+    };*/
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
-        takePictureButton = findViewById(R.id.takePictureButton);
-
-        takePictureButton.setOnClickListener(this);
+        imageView = findViewById(R.id.imageView4);
+        gallaryButton = findViewById(R.id.button);
+        grayScaleButton = findViewById(R.id.button2);
+        grayScaleButton.setOnClickListener(this);
+        gallaryButton.setOnClickListener(this);
+        OpenCVLoader.initDebug();
 
 
 
@@ -58,10 +73,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
 
-
-        _cameraBridgeViewBase = (MyCameraView) findViewById(R.id.main_surface);
-        _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-        _cameraBridgeViewBase.setCvCameraViewListener(this);
+       // _cameraBridgeViewBase =  findViewById(R.id.main_surface);
+//        _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
+  //      _cameraBridgeViewBase.setCvCameraViewListener(this);
     }
 
     @Override
@@ -73,11 +87,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onResume() {
         super.onResume();
-        if (!OpenCVLoader.initDebug()) {
+
+
+
+        /*if (!OpenCVLoader.initDebug()) {
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, _baseLoaderCallback);
         } else {
             _baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
+        }*/
     }
 
     @Override
@@ -108,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public void onCameraViewStarted(int width, int height) {
+        mRgba = new Mat(height, width, CvType.CV_8UC4);
     }
 
     public void onCameraViewStopped() {
@@ -123,11 +141,54 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         return frame;
     }
 
+    public void openGallary(View v) {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+        startActivityForResult(intent,100);
+    }
+
     @Override
-    public void onClick(View v) {
-        if(takePictureButton == v) {
-            //Take picture
-            //Imgcodecs.imwrite(filename, mRgba);
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK && data!=null) {
+            imageUri = data.getData();
+            try {
+                ImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                imageView.setImageBitmap(ImageBitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-}
+
+    public void convertToGray(View v) {
+        Mat Rgba = new Mat();
+        Mat grayMat = new Mat();
+
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inDither = false;
+        o.inSampleSize=4;
+
+        int width = ImageBitmap.getWidth();
+        int height = ImageBitmap.getHeight();
+
+        grayBitmap = Bitmap.createBitmap(width,height,Bitmap.Config.RGB_565);
+
+        Utils.bitmapToMat(ImageBitmap,Rgba);
+        Imgproc.cvtColor(Rgba,grayMat,Imgproc.COLOR_RGB2GRAY);
+        Utils.matToBitmap(grayMat,grayBitmap);
+
+        imageView.setImageBitmap(grayBitmap);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == gallaryButton) {
+            openGallary(v);
+        }
+        if (v == grayScaleButton) {
+            convertToGray(v);
+        }
+
+        }
+    }
