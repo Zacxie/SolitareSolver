@@ -62,7 +62,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new String[]{Manifest.permission.CAMERA},
                 1);
 
-
     }
 
 
