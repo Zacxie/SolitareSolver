@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.WindowManager;
@@ -17,39 +18,28 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
-import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
-    Mat mRgba;
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    Uri imageUri;
-    public Bitmap grayBitmap, ImageBitmap;
-    private CameraBridgeViewBase _cameraBridgeViewBase;
-    private Button gallaryButton, grayScaleButton;
+    private static final int pic_id = 123;
+    String currentPhotoPath;
+
+    public Bitmap edgeDetectionBitmap;
+    private Button gallaryButton, edgeDetectionButton, openCameraButton;
     private ImageView imageView;
+    Bitmap photo;
 
-    /*private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS: {
-                    _cameraBridgeViewBase.enableView();
-                }
-                break;
-                default: {
-                    super.onManagerConnected(status);
-                }
-            }
-        }
-    };*/
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,11 +48,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         setContentView(R.layout.activity_main);
         imageView = findViewById(R.id.imageView4);
         gallaryButton = findViewById(R.id.button);
-        grayScaleButton = findViewById(R.id.button2);
-        grayScaleButton.setOnClickListener(this);
+        openCameraButton = findViewById(R.id.openCameraButton);
+        edgeDetectionButton = findViewById(R.id.button2);
+        edgeDetectionButton.setOnClickListener(this);
         gallaryButton.setOnClickListener(this);
+        openCameraButton.setOnClickListener(this);
         OpenCVLoader.initDebug();
-
 
 
         // Permissions for Android 6+
@@ -71,29 +62,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 1);
 
 
-
-       // _cameraBridgeViewBase =  findViewById(R.id.main_surface);
-//        _cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-  //      _cameraBridgeViewBase.setCvCameraViewListener(this);
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        disableCamera();
-    }
 
     @Override
     public void onResume() {
         super.onResume();
 
 
-
-        /*if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, _baseLoaderCallback);
-        } else {
-            _baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }*/
     }
 
     @Override
@@ -113,74 +89,64 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
     }
 
-    public void onDestroy() {
-        super.onDestroy();
-        disableCamera();
-    }
-
-    public void disableCamera() {
-        if (_cameraBridgeViewBase != null)
-            _cameraBridgeViewBase.disableView();
-    }
-
-    public void onCameraViewStarted(int width, int height) {
-        mRgba = new Mat(height, width, CvType.CV_8UC4);
-    }
-
-    public void onCameraViewStopped() {
-    }
-
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat frame = inputFrame.rgba();
-
-        //Edge detection
-        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.Canny(frame, frame, 100, 80);
-
-        return frame;
-    }
 
     public void openGallary(View v) {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        startActivityForResult(intent,100);
+        startActivityForResult(intent, 100);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == RESULT_OK && data!=null) {
-            imageUri = data.getData();
-            try {
-                ImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                imageView.setImageBitmap(ImageBitmap);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (requestCode == pic_id) {
+            int targetW = imageView.getWidth();
+            int targetH = imageView.getHeight();
+
+            // Get the dimensions of the bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+
+            BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
+
+            // Determine how much to scale down the image
+            int scaleFactor = Math.max(1, Math.min(photoW/targetW, photoH/targetH));
+
+            // Decode the image file into a Bitmap sized to fill the View
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+            bmOptions.inPurgeable = true;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+            imageView.setImageBitmap(bitmap);
+
         }
     }
 
-    public void convertToGray(View v) {
+    public void edgeDetection(View v) {
         Mat Rgba = new Mat();
         Mat grayMat = new Mat();
 
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inDither = false;
-        o.inSampleSize=4;
+        o.inSampleSize = 4;
 
-        int width = ImageBitmap.getWidth();
-        int height = ImageBitmap.getHeight();
+        int width = photo.getWidth();
+        int height = photo.getHeight();
 
-        grayBitmap = Bitmap.createBitmap(width,height,Bitmap.Config.RGB_565);
+        edgeDetectionBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
 
         //Edge detection
-        Utils.bitmapToMat(ImageBitmap,Rgba);
+        Utils.bitmapToMat(photo, Rgba);
         Imgproc.cvtColor(Rgba, grayMat, Imgproc.COLOR_RGB2GRAY);
         Imgproc.Canny(Rgba, grayMat, 100, 80);
 
-        Utils.matToBitmap(grayMat,grayBitmap);
+        Utils.matToBitmap(grayMat, edgeDetectionBitmap);
 
-        imageView.setImageBitmap(grayBitmap);
+        imageView.setImageBitmap(edgeDetectionBitmap);
     }
 
     @Override
@@ -188,9 +154,55 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (v == gallaryButton) {
             openGallary(v);
         }
-        if (v == grayScaleButton) {
-            convertToGray(v);
+        if (v == edgeDetectionButton) {
+            edgeDetection(v);
         }
+        if (v == openCameraButton) {
+
+            dispatchTakePictureIntent();
+
 
         }
     }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, pic_id);
+            }
+        }
+    }
+
+
+}
