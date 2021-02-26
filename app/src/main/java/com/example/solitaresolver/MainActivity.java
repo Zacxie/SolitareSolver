@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button gallaryButton, edgeDetectionButton, openCameraButton;
     private ImageView imageView;
     Bitmap photo;
+    BitmapFactory.Options bmOptions = new BitmapFactory.Options();
 
 
     @Override
@@ -104,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int targetH = imageView.getHeight();
 
             // Get the dimensions of the bitmap
-            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+
             bmOptions.inJustDecodeBounds = true;
 
             BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
@@ -120,8 +121,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             bmOptions.inSampleSize = scaleFactor;
             bmOptions.inPurgeable = true;
 
-            Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
-            imageView.setImageBitmap(bitmap);
+            photo = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+            imageView.setImageBitmap(photo);
 
         }
     }
@@ -130,9 +131,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Mat Rgba = new Mat();
         Mat grayMat = new Mat();
 
-        BitmapFactory.Options o = new BitmapFactory.Options();
-        o.inDither = false;
-        o.inSampleSize = 4;
+
+        bmOptions.inDither = false;
+        bmOptions.inSampleSize = 4;
 
         int width = photo.getWidth();
         int height = photo.getHeight();
