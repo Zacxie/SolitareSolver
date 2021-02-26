@@ -48,11 +48,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
         imageView = findViewById(R.id.imageView4);
-        gallaryButton = findViewById(R.id.button);
+
         openCameraButton = findViewById(R.id.openCameraButton);
         edgeDetectionButton = findViewById(R.id.button2);
         edgeDetectionButton.setOnClickListener(this);
-        gallaryButton.setOnClickListener(this);
+
         openCameraButton.setOnClickListener(this);
         OpenCVLoader.initDebug();
 
