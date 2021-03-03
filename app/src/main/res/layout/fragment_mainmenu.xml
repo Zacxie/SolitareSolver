@@ -1,14 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainMenu"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Mainmenu">
+    android:orientation="vertical">
 
-    <!-- TODO: Update blank fragment layout -->
     <TextView
+        android:id="@+id/title"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_margin="5dp"
+        android:textSize="50dp"
+        android:text="@string/app_name"
+        android:textAlignment="center"
+        android:textColor="@color/textColordark"
+        />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/mainCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:backgroundTint="@color/buttonColor"
+        android:textColor="@color/textColorlight"
+        android:text="@string/camera"
+        android:layout_margin="10dp"
+        />
+    <Button
+        android:id="@+id/mainSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:backgroundTint="@color/buttonColor"
+        android:textColor="@color/textColorlight"
+        android:text="@string/settings"
+        android:layout_margin="10dp"
+
+        />
+
+    <Button
+        android:id="@+id/mainHelp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:backgroundTint="@color/buttonColor"
+        android:textColor="@color/textColorlight"
+        android:text="@string/help"
+        android:layout_margin="10dp"
+
+        />
+
+    <FrameLayout
+        android:id="@+id/content_from_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+
+</LinearLayout>
+
