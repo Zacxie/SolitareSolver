@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String currentPhotoPath;
 
     public Bitmap edgeDetectionBitmap;
-    private Button gallaryButton, edgeDetectionButton, openCameraButton;
+    private Button edgeDetectionButton, openCameraButton;
     private ImageView imageView;
     Bitmap photo;
     BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -89,13 +89,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-    public void openGallary(View v) {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-
-        startActivityForResult(intent, 100);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -113,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int photoH = bmOptions.outHeight;
 
             // Determine how much to scale down the image
-            int scaleFactor = Math.max(1, Math.min(photoW/targetW, photoH/targetH));
+            int scaleFactor = Math.max(1, Math.min(photoW / targetW, photoH / targetH));
 
             // Decode the image file into a Bitmap sized to fill the View
             bmOptions.inJustDecodeBounds = false;
@@ -151,9 +144,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        if (v == gallaryButton) {
-            openGallary(v);
-        }
         if (v == edgeDetectionButton) {
             edgeDetection(v);
         }
