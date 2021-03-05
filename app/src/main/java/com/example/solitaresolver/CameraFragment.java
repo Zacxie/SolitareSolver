@@ -24,12 +24,18 @@ import androidx.fragment.app.Fragment;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 public class CameraFragment extends Fragment implements View.OnClickListener {
@@ -117,6 +123,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
     public void edgeDetection(View v) {
         Mat Rgba = new Mat();
         Mat grayMat = new Mat();
+        final List<MatOfPoint> points = new ArrayList<>();
+        final Mat hierarchy = new Mat();
+
 
 
         bmOptions.inDither = false;
@@ -129,11 +138,26 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
 
         //Edge detection
         Utils.bitmapToMat(photo, Rgba);
+
+        Imgproc.cvtColor(Rgba, grayMat, Imgproc.COLOR_RGB2BGR);
         Imgproc.cvtColor(Rgba, grayMat, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.GaussianBlur(Rgba, grayMat, new Size(13,13), 0);
         Imgproc.Canny(Rgba, grayMat, 100, 80);
+        //Imgproc.dilate(Rgba, grayMat, new Mat(), new Point(-1, -1), 2);
 
-        Utils.matToBitmap(grayMat, edgeDetectionBitmap);
 
+
+        Imgproc.findContours(grayMat, points, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        for(int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0]) {
+            MatOfPoint matOfPoint = points.get(idx);
+            Rect rect = Imgproc.boundingRect(matOfPoint);
+            Imgproc.rectangle(Rgba, rect.tl(), rect.br(), new Scalar(255, 0, 0),2);
+        }
+
+        Utils.matToBitmap(Rgba, edgeDetectionBitmap);
+
+        System.out.println(points.toString());
         imageView.setImageBitmap(edgeDetectionBitmap);
     }
 
