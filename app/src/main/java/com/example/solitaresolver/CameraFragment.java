@@ -23,9 +23,11 @@ import androidx.fragment.app.Fragment;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.Rect;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -120,6 +122,44 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
     }
 
 
+    private void Harris(Mat Scene, Mat Object, int thresh) {
+
+        // This function implements the Harris Corner detection. The corners at intensity > thresh
+        // are drawn.
+        Mat Harris_scene = new Mat();
+        Mat Harris_object = new Mat();
+
+        Mat harris_scene_norm = new Mat(), harris_object_norm = new Mat(), harris_scene_scaled = new Mat(), harris_object_scaled = new Mat();
+        int blockSize = 9;
+        int apertureSize = 5;
+        double k = 0.1;
+        Imgproc.cornerHarris(Scene, Harris_scene,blockSize, apertureSize,k);
+        Imgproc.cornerHarris(Object, Harris_object, blockSize,apertureSize,k);
+
+        Core.normalize(Harris_scene, harris_scene_norm, 0, 255, Core.NORM_MINMAX, CvType.CV_32FC1, new Mat());
+        Core.normalize(Harris_object, harris_object_norm, 0, 255, Core.NORM_MINMAX, CvType.CV_32FC1, new Mat());
+
+        Core.convertScaleAbs(harris_scene_norm, harris_scene_scaled);
+        Core.convertScaleAbs(harris_object_norm, harris_object_scaled);
+
+        for( int j = 0; j < harris_scene_norm.rows() ; j++){
+            for( int i = 0; i < harris_scene_norm.cols(); i++){
+                if ((int) harris_scene_norm.get(j,i)[0] > thresh){
+                    Imgproc.circle(harris_scene_scaled, new Point(i,j), 5 , new Scalar(0), 2 ,8 , 0);
+                }
+            }
+        }
+
+        for( int j = 0; j < harris_object_norm.rows() ; j++){
+            for( int i = 0; i < harris_object_norm.cols(); i++){
+                if ((int) harris_object_norm.get(j,i)[0] > thresh){
+                    Imgproc.circle(harris_object_scaled, new Point(i,j), 5 , new Scalar(0), 2 ,8 , 0);
+                }
+            }
+        }
+        Utils.matToBitmap(Scene, edgeDetectionBitmap);
+    }
+
     public void edgeDetection(View v) {
         Mat Rgba = new Mat();
         Mat grayMat = new Mat();
@@ -143,9 +183,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
         Imgproc.cvtColor(Rgba, grayMat, Imgproc.COLOR_RGB2GRAY);
         Imgproc.GaussianBlur(Rgba, grayMat, new Size(13,13), 0);
         Imgproc.Canny(Rgba, grayMat, 100, 80);
+
+        int maxCorners = Math.max(23, 1);
+        MatOfPoint corners = new MatOfPoint();
+        double qualityLevel = 0.01;
+        double minDistance = 10;
+        int blockSize = 3, gradientSize = 3;
+        boolean useHarrisDetector = false;
+        double k = 0.04;
+
+        Imgproc.goodFeaturesToTrack(grayMat, corners, maxCorners, qualityLevel, minDistance, new Mat(),
+                blockSize, gradientSize, useHarrisDetector, k);
         //Imgproc.dilate(Rgba, grayMat, new Mat(), new Point(-1, -1), 2);
 
-
+/*
 
         Imgproc.findContours(grayMat, points, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -153,7 +204,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
             MatOfPoint matOfPoint = points.get(idx);
             Rect rect = Imgproc.boundingRect(matOfPoint);
             Imgproc.rectangle(Rgba, rect.tl(), rect.br(), new Scalar(255, 0, 0),2);
-        }
+        }*/
 
         Utils.matToBitmap(Rgba, edgeDetectionBitmap);
 
