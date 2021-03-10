@@ -38,12 +38,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 
 public class CameraFragment extends Fragment implements View.OnClickListener {
 
     private static final int pic_id = 123;
     String currentPhotoPath;
+    int maxCorners = 23;
+    private Random rng = new Random(12345);
+
 
     public Bitmap edgeDetectionBitmap;
     private Button edgeDetectionButton, openCameraButton;
@@ -184,7 +188,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
         Imgproc.GaussianBlur(Rgba, grayMat, new Size(13,13), 0);
         Imgproc.Canny(Rgba, grayMat, 100, 80);
 
-        int maxCorners = Math.max(23, 1);
+        maxCorners = Math.max(maxCorners, 1);
         MatOfPoint corners = new MatOfPoint();
         double qualityLevel = 0.01;
         double minDistance = 10;
@@ -194,6 +198,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
 
         Imgproc.goodFeaturesToTrack(grayMat, corners, maxCorners, qualityLevel, minDistance, new Mat(),
                 blockSize, gradientSize, useHarrisDetector, k);
+        System.out.println("corners:" + corners);
+        System.out.println("** Number of corners detected: " + corners.rows());
+
         //Imgproc.dilate(Rgba, grayMat, new Mat(), new Point(-1, -1), 2);
 
 /*
@@ -205,6 +212,17 @@ public class CameraFragment extends Fragment implements View.OnClickListener {
             Rect rect = Imgproc.boundingRect(matOfPoint);
             Imgproc.rectangle(Rgba, rect.tl(), rect.br(), new Scalar(255, 0, 0),2);
         }*/
+
+        int[] cornersData = new int[(int) (corners.total() * corners.channels())];
+        corners.get(0, 0, cornersData);
+        int radius = 20;
+
+        for(int i = 0; i<corners.rows(); i++){
+            Imgproc.circle(Rgba, new Point(cornersData[i * 2], cornersData[i * 2 + 1]),radius, new Scalar(rng.nextInt(256), rng.nextInt(256), rng.nextInt(256)), Core.FILLED);
+        }
+
+
+
 
         Utils.matToBitmap(Rgba, edgeDetectionBitmap);
 
