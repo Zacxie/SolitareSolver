@@ -3,23 +3,47 @@ package com.example.solitaresolver;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Environment;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.dnn.Dnn;
+import org.opencv.dnn.Net;
 import org.opencv.imgproc.Imgproc;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
+
     private CameraBridgeViewBase _cameraBridgeViewBase;
+    boolean startYolo = false;
+    boolean firstTimeYolo = false;
+    Net tinyYolo;
+
+
+    public void YOLO(View Button) {
+        if (startYolo == false) {
+            startYolo = true;
+            if (firstTimeYolo ==false) {
+                String tinyYoloCfg = Environment.getExternalStorageDirectory()+"/dnns/yolov3-tiny.cfg";
+                String tinyYoloWeights = Environment.getExternalStorageDirectory()+"/dnns/yolov3-tiny.weights";
+                tinyYolo = Dnn.readNetFromDarknet(tinyYoloCfg, tinyYoloWeights);
+            }
+        } else {
+            startYolo = false;
+        }
+    }
 
     private BaseLoaderCallback _baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -105,9 +129,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat frame = inputFrame.rgba();
 
-        //Edge detection
-        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
-        Imgproc.Canny(frame, frame, 100, 80);
+        if (startYolo == true) {
+            Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2RGB);
+            Mat imageBlob = Dnn.blobFromImage(frame, 0.00392,  new Size(416,416), new Scalar(0,0,0), false);
+            tinyYolo.setInput(imageBlob);
+            tinyYolo.forward();
+
+
+
+            //Edge detection
+            //Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2GRAY);
+            //Imgproc.Canny(frame, frame, 100, 80);
+
+        }
 
         return frame;
     }
